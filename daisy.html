@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wordle Game</title>
+    <title>Penny Wordle</title>
     <style>
         :root {
             --green: #6aaa64;
@@ -11,6 +11,7 @@
             --gray: #787c7e;
             --black: #121213;
             --border: #3a3a3c;
+            --bronze: #cd7f32;
         }
 
         body {
@@ -119,7 +120,7 @@
             z-index: 20;
         }
 
-        #daisy-canvas {
+        #penny-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -139,28 +140,21 @@
             transition: height 5s ease-out;
             z-index: 4;
         }
-
-        .grass-blade {
-            position: absolute;
-            bottom: 0;
-            width: 2px;
-            background: #4caf50;
-        }
     </style>
 </head>
 <body>
 
-    <div id="counter">Daisies: 0</div>
+    <div id="counter">Pennies: 0</div>
     <div id="game-container">
         <div class="grid" id="grid"></div>
         <div id="keyboard"></div>
     </div>
     <div id="congrats">Congratulations!</div>
     <div id="grass"></div>
-    <canvas id="daisy-canvas"></canvas>
+    <canvas id="penny-canvas"></canvas>
 
     <script>
-        const targetWord = "DAISY";
+        const targetWord = "PENNY";
         let currentGuess = "";
         let guesses = [];
         const maxGuesses = 6;
@@ -171,7 +165,7 @@
         const congrats = document.getElementById('congrats');
         const counter = document.getElementById('counter');
         const grass = document.getElementById('grass');
-        const canvas = document.getElementById('daisy-canvas');
+        const canvas = document.getElementById('penny-canvas');
         const ctx = canvas.getContext('2d');
 
         function initGrid() {
@@ -188,11 +182,7 @@
         }
 
         function initKeyboard() {
-            const rows = [
-                "QWERTYUIOP",
-                "ASDFGHJKL",
-                "ENTER,ZXCVBNM,BACK"
-            ];
+            const rows = ["QWERTYUIOP", "ASDFGHJKL", "ENTER,ZXCVBNM,BACK"];
             rows.forEach(rowStr => {
                 const row = document.createElement('div');
                 row.className = 'kbd-row';
@@ -218,9 +208,8 @@
 
         function handleInput(key) {
             if (gameOver) return;
-            if (key === "ENTER") {
-                submitGuess();
-            } else if (key === "BACK") {
+            if (key === "ENTER") submitGuess();
+            else if (key === "BACK") {
                 currentGuess = currentGuess.slice(0, -1);
                 updateGrid();
             } else if (currentGuess.length < 5 && /^[A-Z]$/.test(key)) {
@@ -232,27 +221,17 @@
         function updateGrid() {
             const row = grid.children[guesses.length];
             for (let i = 0; i < 5; i++) {
-                const tile = row.children[i];
-                tile.textContent = currentGuess[i] || "";
+                row.children[i].textContent = currentGuess[i] || "";
             }
         }
 
         function submitGuess() {
             if (currentGuess.length !== 5) return;
-            
             const row = grid.children[guesses.length];
             const result = checkGuess(currentGuess);
-            
-            for (let i = 0; i < 5; i++) {
-                row.children[i].classList.add(result[i]);
-            }
-
-            if (currentGuess === targetWord) {
-                winGame();
-            } else if (guesses.length === maxGuesses - 1) {
-                gameOver = true;
-            }
-
+            for (let i = 0; i < 5; i++) row.children[i].classList.add(result[i]);
+            if (currentGuess === targetWord) winGame();
+            else if (guesses.length === maxGuesses - 1) gameOver = true;
             guesses.push(currentGuess);
             currentGuess = "";
         }
@@ -261,7 +240,6 @@
             const result = Array(5).fill("absent");
             const targetArr = targetWord.split("");
             const guessArr = guess.split("");
-
             for (let i = 0; i < 5; i++) {
                 if (guessArr[i] === targetArr[i]) {
                     result[i] = "correct";
@@ -269,7 +247,6 @@
                     guessArr[i] = null;
                 }
             }
-
             for (let i = 0; i < 5; i++) {
                 if (guessArr[i] && targetArr.includes(guessArr[i])) {
                     result[i] = "present";
@@ -284,60 +261,54 @@
             congrats.style.display = "block";
             counter.style.display = "block";
             grass.style.height = "100px";
-            startDaisyShower();
+            startPennyShower();
         }
 
-        const daisies = [];
-        function startDaisyShower() {
+        const pennies = [];
+        function startPennyShower() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             let count = 0;
-            const maxDaisies = 1000;
+            const maxPennies = 100;
 
-            function createDaisy(side) {
+            function createPenny() {
                 return {
-                    x: side === "left" ? 0 : canvas.width,
-                    y: 0,
-                    vx: (side === "left" ? 1 : -1) * (Math.random() * 3 + 1),
-                    vy: Math.random() * 2 + 2,
+                    x: Math.random() * canvas.width,
+                    y: -20,
+                    vx: Math.random() * 1 - 0.5,
+                    vy: Math.random() * 1.5 + 1,
                     angle: Math.random() * Math.PI * 2,
-                    spin: Math.random() * 0.1 - 0.05
+                    spin: Math.random() * 0.05 - 0.025,
+                    size: Math.random() * 5 + 10
                 };
             }
 
             const interval = setInterval(() => {
-                if (count < maxDaisies) {
-                    daisies.push(createDaisy("left"));
-                    daisies.push(createDaisy("right"));
-                    count += 2;
-                    counter.textContent = `Daisies: ${count}`;
+                if (count < maxPennies) {
+                    pennies.push(createPenny());
+                    count++;
+                    counter.textContent = `Pennies: ${count}`;
                 } else {
                     clearInterval(interval);
                 }
-            }, 10);
+            }, 100);
 
             function animate() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                daisies.forEach(d => {
-                    d.x += d.vx;
-                    d.y += d.vy;
-                    d.angle += d.spin;
-                    
+                pennies.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.angle += p.spin;
                     ctx.save();
-                    ctx.translate(d.x, d.y);
-                    ctx.rotate(d.angle);
-                    
-                    // Draw simplified daisy
-                    ctx.fillStyle = "white";
-                    for (let i = 0; i < 8; i++) {
-                        ctx.rotate(Math.PI / 4);
-                        ctx.fillRect(5, -2, 10, 4);
-                    }
-                    ctx.fillStyle = "yellow";
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.angle);
+                    ctx.fillStyle = "#b87333";
                     ctx.beginPath();
-                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
                     ctx.fill();
-                    
+                    ctx.strokeStyle = "#8b4513";
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
                     ctx.restore();
                 });
                 requestAnimationFrame(animate);
