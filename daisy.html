@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Penny Wordle</title>
+    <title>Disti Wordle</title>
     <style>
         :root {
             --green: #6aaa64;
@@ -11,27 +11,25 @@
             --gray: #787c7e;
             --black: #121213;
             --border: #3a3a3c;
-            --bronze: #cd7f32;
+            --ribbon-gold: #ffd700;
         }
 
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px 0;
             background-color: var(--black);
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
             touch-action: manipulation;
         }
 
         #counter {
-            position: absolute;
-            top: 10px;
-            left: 10px;
+            align-self: flex-start;
+            margin-left: 20px;
             font-size: 18px;
             display: none;
             z-index: 10;
@@ -40,11 +38,10 @@
         #game-container {
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            flex-grow: 1;
             width: 100%;
             max-width: 500px;
+            margin-top: 20px;
         }
 
         .grid {
@@ -106,28 +103,41 @@
 
         .key.large { max-width: 65px; }
 
-        #congrats {
-            position: absolute;
+        #ribbon-container {
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
-            color: black;
-            padding: 20px;
-            border-radius: 8px;
-            display: none;
-            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            width: 300px;
             z-index: 20;
+            pointer-events: none;
         }
 
-        #penny-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 5;
+        .ribbon {
+            background-color: var(--ribbon-gold);
+            color: #b8860b;
+            width: 60px;
+            height: 80px;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 80%, 0% 100%);
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 80%, 0% 100%);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease-out;
+        }
+
+        .ribbon.visible {
+            opacity: 1;
+            transform: scale(1);
         }
 
         #grass {
@@ -144,185 +154,144 @@
 </head>
 <body>
 
-    <div id="counter">Pennies: 0</div>
+    <div id="counter">Disti count: 6</div>
     <div id="game-container">
         <div class="grid" id="grid"></div>
         <div id="keyboard"></div>
     </div>
-    <div id="congrats">Congratulations!</div>
+    <div id="ribbon-container"></div>
     <div id="grass"></div>
-    <canvas id="penny-canvas"></canvas>
 
     <script>
-        const targetWord = "PENNY";
-        let currentGuess = "";
-        let guesses = [];
-        const maxGuesses = 6;
-        let gameOver = false;
+        document.addEventListener("DOMContentLoaded", () => {
+            const targetWord = "DISTI";
+            let currentGuess = "";
+            let guesses = [];
+            const maxGuesses = 6;
+            let gameOver = false;
 
-        const grid = document.getElementById('grid');
-        const keyboard = document.getElementById('keyboard');
-        const congrats = document.getElementById('congrats');
-        const counter = document.getElementById('counter');
-        const grass = document.getElementById('grass');
-        const canvas = document.getElementById('penny-canvas');
-        const ctx = canvas.getContext('2d');
+            const grid = document.getElementById('grid');
+            const keyboard = document.getElementById('keyboard');
+            const counter = document.getElementById('counter');
+            const grass = document.getElementById('grass');
+            const ribbonContainer = document.getElementById('ribbon-container');
 
-        function initGrid() {
-            for (let i = 0; i < maxGuesses; i++) {
-                const row = document.createElement('div');
-                row.className = 'row';
-                for (let j = 0; j < 5; j++) {
-                    const tile = document.createElement('div');
-                    tile.className = 'tile';
-                    row.appendChild(tile);
-                }
-                grid.appendChild(row);
-            }
-        }
-
-        function initKeyboard() {
-            const rows = ["QWERTYUIOP", "ASDFGHJKL", "ENTER,ZXCVBNM,BACK"];
-            rows.forEach(rowStr => {
-                const row = document.createElement('div');
-                row.className = 'kbd-row';
-                const keys = rowStr.split(',');
-                keys.forEach(keyGroup => {
-                    if (keyGroup.length > 1 && keyGroup !== "ENTER" && keyGroup !== "BACK") {
-                        for (let char of keyGroup) createKey(char, row);
-                    } else {
-                        createKey(keyGroup, row);
+            function initGrid() {
+                for (let i = 0; i < maxGuesses; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'row';
+                    for (let j = 0; j < 5; j++) {
+                        const tile = document.createElement('div');
+                        tile.className = 'tile';
+                        row.appendChild(tile);
                     }
+                    grid.appendChild(row);
+                }
+            }
+
+            function initKeyboard() {
+                const rows = ["QWERTYUIOP", "ASDFGHJKL", "ENTER,ZXCVBNM,BACK"];
+                rows.forEach(rowStr => {
+                    const row = document.createElement('div');
+                    row.className = 'kbd-row';
+                    const keys = rowStr.split(',');
+                    keys.forEach(keyGroup => {
+                        if (keyGroup.length > 1 && keyGroup !== "ENTER" && keyGroup !== "BACK") {
+                            for (let char of keyGroup) createKey(char, row);
+                        } else {
+                            createKey(keyGroup, row);
+                        }
+                    });
+                    keyboard.appendChild(row);
                 });
-                keyboard.appendChild(row);
+            }
+
+            function createKey(label, container) {
+                const btn = document.createElement('button');
+                btn.className = 'key' + (label.length > 1 ? ' large' : '');
+                btn.textContent = label === "BACK" ? "←" : label;
+                btn.onclick = () => handleInput(label);
+                container.appendChild(btn);
+            }
+
+            function handleInput(key) {
+                if (gameOver) return;
+                if (key === "ENTER") submitGuess();
+                else if (key === "BACK") {
+                    currentGuess = currentGuess.slice(0, -1);
+                    updateGrid();
+                } else if (currentGuess.length < 5 && /^[A-Z]$/.test(key)) {
+                    currentGuess += key;
+                    updateGrid();
+                }
+            }
+
+            function updateGrid() {
+                const row = grid.children[guesses.length];
+                for (let i = 0; i < 5; i++) {
+                    row.children[i].textContent = currentGuess[i] || "";
+                }
+            }
+
+            function submitGuess() {
+                if (currentGuess.length !== 5) return;
+                const row = grid.children[guesses.length];
+                const result = checkGuess(currentGuess);
+                for (let i = 0; i < 5; i++) row.children[i].classList.add(result[i]);
+                if (currentGuess === targetWord) winGame();
+                else if (guesses.length === maxGuesses - 1) gameOver = true;
+                guesses.push(currentGuess);
+                currentGuess = "";
+            }
+
+            function checkGuess(guess) {
+                const result = Array(5).fill("absent");
+                const targetArr = targetWord.split("");
+                const guessArr = guess.split("");
+                for (let i = 0; i < 5; i++) {
+                    if (guessArr[i] === targetArr[i]) {
+                        result[i] = "correct";
+                        targetArr[i] = null;
+                        guessArr[i] = null;
+                    }
+                }
+                for (let i = 0; i < 5; i++) {
+                    if (guessArr[i] && targetArr.includes(guessArr[i])) {
+                        result[i] = "present";
+                        targetArr[targetArr.indexOf(guessArr[i])] = null;
+                    }
+                }
+                return result;
+            }
+
+            function winGame() {
+                gameOver = true;
+                counter.style.display = "block";
+                grass.style.height = "100px";
+                showRibbons();
+            }
+
+            function showRibbons() {
+                for (let i = 0; i < 6; i++) {
+                    setTimeout(() => {
+                        const ribbon = document.createElement('div');
+                        ribbon.className = 'ribbon';
+                        ribbon.textContent = 'D';
+                        ribbonContainer.appendChild(ribbon);
+                        ribbon.offsetHeight;
+                        ribbon.classList.add('visible');
+                    }, i * 500);
+                }
+            }
+
+            initGrid();
+            initKeyboard();
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === "Enter") handleInput("ENTER");
+                else if (e.key === "Backspace") handleInput("BACK");
+                else handleInput(e.key.toUpperCase());
             });
-        }
-
-        function createKey(label, container) {
-            const btn = document.createElement('button');
-            btn.className = 'key' + (label.length > 1 ? ' large' : '');
-            btn.textContent = label === "BACK" ? "←" : label;
-            btn.onclick = () => handleInput(label);
-            container.appendChild(btn);
-        }
-
-        function handleInput(key) {
-            if (gameOver) return;
-            if (key === "ENTER") submitGuess();
-            else if (key === "BACK") {
-                currentGuess = currentGuess.slice(0, -1);
-                updateGrid();
-            } else if (currentGuess.length < 5 && /^[A-Z]$/.test(key)) {
-                currentGuess += key;
-                updateGrid();
-            }
-        }
-
-        function updateGrid() {
-            const row = grid.children[guesses.length];
-            for (let i = 0; i < 5; i++) {
-                row.children[i].textContent = currentGuess[i] || "";
-            }
-        }
-
-        function submitGuess() {
-            if (currentGuess.length !== 5) return;
-            const row = grid.children[guesses.length];
-            const result = checkGuess(currentGuess);
-            for (let i = 0; i < 5; i++) row.children[i].classList.add(result[i]);
-            if (currentGuess === targetWord) winGame();
-            else if (guesses.length === maxGuesses - 1) gameOver = true;
-            guesses.push(currentGuess);
-            currentGuess = "";
-        }
-
-        function checkGuess(guess) {
-            const result = Array(5).fill("absent");
-            const targetArr = targetWord.split("");
-            const guessArr = guess.split("");
-            for (let i = 0; i < 5; i++) {
-                if (guessArr[i] === targetArr[i]) {
-                    result[i] = "correct";
-                    targetArr[i] = null;
-                    guessArr[i] = null;
-                }
-            }
-            for (let i = 0; i < 5; i++) {
-                if (guessArr[i] && targetArr.includes(guessArr[i])) {
-                    result[i] = "present";
-                    targetArr[targetArr.indexOf(guessArr[i])] = null;
-                }
-            }
-            return result;
-        }
-
-        function winGame() {
-            gameOver = true;
-            congrats.style.display = "block";
-            counter.style.display = "block";
-            grass.style.height = "100px";
-            startPennyShower();
-        }
-
-        const pennies = [];
-        function startPennyShower() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            let count = 0;
-            const maxPennies = 100;
-
-            function createPenny() {
-                return {
-                    x: Math.random() * canvas.width,
-                    y: -20,
-                    vx: Math.random() * 1 - 0.5,
-                    vy: Math.random() * 1.5 + 1,
-                    angle: Math.random() * Math.PI * 2,
-                    spin: Math.random() * 0.05 - 0.025,
-                    size: Math.random() * 5 + 10
-                };
-            }
-
-            const interval = setInterval(() => {
-                if (count < maxPennies) {
-                    pennies.push(createPenny());
-                    count++;
-                    counter.textContent = `Pennies: ${count}`;
-                } else {
-                    clearInterval(interval);
-                }
-            }, 100);
-
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                pennies.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.angle += p.spin;
-                    ctx.save();
-                    ctx.translate(p.x, p.y);
-                    ctx.rotate(p.angle);
-                    ctx.fillStyle = "#b87333";
-                    ctx.beginPath();
-                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = "#8b4513";
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    ctx.restore();
-                });
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        initGrid();
-        initKeyboard();
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === "Enter") handleInput("ENTER");
-            else if (e.key === "Backspace") handleInput("BACK");
-            else handleInput(e.key.toUpperCase());
         });
     </script>
 </body>
